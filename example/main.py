@@ -107,53 +107,6 @@ def get_home() -> Home:
     )
 
 
-def get_websocket_url():
-    # Not sure what this is needed for. It was in one of the examples.
-    query = """
-    {
-      viewer {
-        websocketSubscriptionUrl
-      }
-    }
-    """
-    data = gql_request(query)
-    url = data["data"]["viewer"]["websocketSubscriptionUrl"]
-
-
-def subscribe_to_live_measurement(home_id: str):
-    # subscription{
-    #   liveMeasurement(homeId:"96a14971-525a-4420-aae9-e5aedaa129ff") {
-    #     timestamp
-    #     power
-    #     maxPower
-    #   }
-    # }
-    pass
-
-
-def get_subscription_info():
-    query = """
-    {
-      viewer {
-        homes {
-          currentSubscription {
-            priceInfo {
-              current {
-                total
-                energy
-                tax
-                startsAt
-              }
-            }
-          }
-        }
-      }
-    }
-    """
-    data = gql_request(query)
-    return data
-
-
 async def realtime_measurments(home_id: str):
     query = """
         subscription {
