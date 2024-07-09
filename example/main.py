@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 import requests
 
 
@@ -10,10 +11,41 @@ TOKEN = "<TOKEN>"
 
 @dataclass
 class Home:
+    """
+    Example:
+    {
+      "id": "0f0d73e7-387f-410e-9bef-f609aff70ec9",
+      "timeZone": "Europe/Stockholm",
+      "address": {
+        "address1": "Str\u00f6mshammar 1",
+        "postalCode": "64296",
+        "city": "Malmk\u00f6ping"
+      },
+      "features": {
+        "realTimeConsumptionEnabled": false
+      },
+      "currentSubscription": {
+        "priceInfo": {
+          "current": {
+            "total": 0.5101,
+            "energy": 0.3281,
+            "tax": 0.182,
+            "startsAt": "2024-07-09T12:00:00.000+02:00"
+          }
+        }
+      }
+    }
+    """
+
     id: str
     timeZone: str
     address: dict
     features: dict
+    currentSubscription: dict
+
+    def __str__(self):
+        # Print it as JSON
+        return json.dumps(self.__dict__, indent=2)
 
 
 def gql_request(query):
@@ -25,6 +57,7 @@ def gql_request(query):
         },
         json={"query": query},
     )
+
     response.raise_for_status()
     return response.json()
 
@@ -44,6 +77,16 @@ def get_home() -> Home:
                 features {
                     realTimeConsumptionEnabled
                 }
+                currentSubscription {
+                    priceInfo {
+                        current {
+                          total
+                          energy
+                          tax
+                          startsAt
+                        }
+                    }
+                }
             }
         }
     }
@@ -55,6 +98,7 @@ def get_home() -> Home:
         timeZone=home_data["timeZone"],
         address=home_data["address"],
         features=home_data["features"],
+        currentSubscription=home_data["currentSubscription"],
     )
 
 
