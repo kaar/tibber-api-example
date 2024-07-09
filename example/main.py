@@ -1,6 +1,11 @@
 from dataclasses import dataclass
+import asyncio
 import json
 import requests
+
+# https://github.com/Danielhiversen/pyTibber
+from gql.transport.websockets import WebsocketsTransport
+from gql import gql, Client
 
 
 WEBSOCKET_URL = "wss://websocket-api.tibber.com/v1-beta/gql/subscriptions"
@@ -149,10 +154,62 @@ def get_subscription_info():
     return data
 
 
-def main():
+async def realtime_measurments(home_id: str):
+    query = """
+        subscription {
+            liveMeasurement(homeId:"%s"){
+                accumulatedConsumption
+                accumulatedConsumptionLastHour
+                accumulatedCost
+                accumulatedProduction
+                accumulatedProductionLastHour
+                accumulatedReward
+                averagePower
+                currency
+                currentL1
+                currentL2
+                currentL3
+                lastMeterConsumption
+                lastMeterProduction
+                maxPower
+                minPower
+                power
+                powerFactor
+                powerProduction
+                powerReactive
+                signalStrength
+                timestamp
+                voltagePhase1
+                voltagePhase2
+                voltagePhase3
+            }
+        }
+    """
+    transport = WebsocketsTransport(
+        url=WEBSOCKET_URL,
+        init_payload={"token": TOKEN},
+    )
+    async with Client(
+        transport=transport,
+        fetch_schema_from_transport=True,
+    ) as session:
+        async for data in session.subscribe(gql(query % home_id)):
+            print(data)
+            """
+            I get the following exception:
+                gql.transport.exceptions.TransportQueryError:
+                {'message': 'No live measurements available for this home 0f0d73e7-387f-410e-9bef-f609aff70ec9 user agent Python/3.12 websockets/11.0.3.
+                You need to have a tibber pulse device paired for this feature to be available',
+
+            It probably because I don't have anything streaming.
+            """
+
+
+async def main():
     home = get_home()
     print(home)
+    await realtime_measurments(home.id)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
