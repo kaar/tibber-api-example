@@ -67,7 +67,7 @@ def gql_request(query):
     return response.json()
 
 
-def get_home() -> Home:
+def get_homes() -> list[Home]:
     query = """
     {
         viewer {
@@ -97,14 +97,17 @@ def get_home() -> Home:
     }
     """
     data = gql_request(query)
-    home_data = data["data"]["viewer"]["homes"][0]
-    return Home(
-        id=home_data["id"],
-        timeZone=home_data["timeZone"],
-        address=home_data["address"],
-        features=home_data["features"],
-        currentSubscription=home_data["currentSubscription"],
-    )
+    homes = data["data"]["viewer"]["homes"]
+    return [
+        Home(
+            id=home_data["id"],
+            timeZone=home_data["timeZone"],
+            address=home_data["address"],
+            features=home_data["features"],
+            currentSubscription=home_data["currentSubscription"],
+        )
+        for home_data in homes
+    ]
 
 
 async def realtime_measurments(home_id: str):
@@ -159,9 +162,13 @@ async def realtime_measurments(home_id: str):
 
 
 async def main():
-    home = get_home()
-    print(home)
-    await realtime_measurments(home.id)
+    homes = get_homes()
+    tasks = []
+    for home in homes:
+        print(f"Running real time for home: {home.id}")
+        tasks.append(realtime_measurments(home.id))
+
+    await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
